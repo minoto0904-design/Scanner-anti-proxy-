@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SYS SCANNER PRO</title>
+
+<style>
+*{box-sizing:border-box;}
+
+@keyframes glowPulse{
+0%,100%{box-shadow:0 0 8px rgba(0,255,102,0.35),0 0 20px rgba(0,255,102,0.1) inset;}
+50%{box-shadow:0 0 20px rgba(0,255,102,0.7),0 0 30px rgba(0,255,102,0.2) inset;}
+}
+
+@keyframes fadeIn{
+from{opacity:0;transform:translate(-50%,-46%);}
+to{opacity:1;transform:translate(-50%,-50%);}
+}
+
+@keyframes flicker{
+0%,100%{opacity:1;}
+92%{opacity:1;}
+93%{opacity:0.6;}
+94%{opacity:1;}
+}
+
+body{
+margin:0;
+background:#020403;
+font-family:'Consolas','Courier New',monospace;
+color:#00ff66;
+overflow:hidden;
+}
+
+canvas{
+position:fixed;
+top:0;left:0;
+width:100%;height:100%;
+z-index:-1;
+}
+
+::selection{background:#00ff66;color:#000;}
+
+h2,h3{
+letter-spacing:2px;
+text-transform:uppercase;
+margin:0 0 14px 0;
+text-shadow:0 0 8px rgba(0,255,102,0.6);
+animation:flicker 6s infinite;
+}
+
+/* LOGIN */
+#login{
+position:absolute;
+top:50%;left:50%;
+transform:translate(-50%,-50%);
+width:360px;
+padding:28px 24px;
+border:1px solid #00ff66;
+border-radius:6px;
+background:linear-gradient(160deg,rgba(0,20,10,0.92),rgba(0,0,0,0.95));
+text-align:center;
+animation:glowPulse 3s ease-in-out infinite, fadeIn 0.4s ease-out;
+backdrop-filter:blur(2px);
+}
+
+#login .subtitle{
+font-size:11px;
+opacity:0.55;
+letter-spacing:3px;
+margin-bottom:18px;
+}
+
+input,button{
+width:100%;
+padding:11px;
+margin-top:10px;
+background:rgba(0,20,10,0.6);
+border:1px solid #00ff66;
+border-radius:4px;
+color:#00ff66;
+font-family:inherit;
+font-size:13px;
+letter-spacing:1px;
+transition:all 0.2s ease;
+}
+
+input::placeholder{color:rgba(0,255,102,0.4);}
+
+input:focus{
+outline:none;
+box-shadow:0 0 10px rgba(0,255,102,0.6);
+background:rgba(0,40,20,0.6);
+}
+
+button{
+cursor:pointer;
+font-weight:bold;
+}
+
+button:hover{
+background:#00ff66;
+color:#020403;
+box-shadow:0 0 16px rgba(0,255,102,0.8);
+}
+
+button:active{transform:scale(0.97);}
+
+#error{
+margin-top:12px;
+font-size:12px;
+min-height:14px;
+color:#ff3b3b;
+text-shadow:0 0 6px rgba(255,59,59,0.7);
+}
+
+/* APP */
+.container{
+display:none;
+position:absolute;
+top:50%;left:50%;
+transform:translate(-50%,-50%);
+width:760px;
+max-height:88vh;
+overflow-y:auto;
+padding:26px;
+border:1px solid #00ff66;
+border-radius:6px;
+background:linear-gradient(160deg,rgba(0,20,10,0.92),rgba(0,0,0,0.95));
+animation:glowPulse 4s ease-in-out infinite, fadeIn 0.4s ease-out;
+}
+
+/* ADMIN */
+#admin{
+display:none;
+position:absolute;
+top:50%;left:50%;
+transform:translate(-50%,-50%);
+width:820px;
+max-height:90vh;
+overflow-y:auto;
+padding:26px;
+border:1px solid #00ff66;
+border-radius:6px;
+background:linear-gradient(160deg,rgba(0,20,10,0.95),rgba(0,0,0,0.97));
+animation:glowPulse 4s ease-in-out infinite, fadeIn 0.4s ease-out;
+}
+
+.box{
+border:1px solid rgba(0,255,102,0.5);
+border-radius:4px;
+padding:12px;
+margin-top:12px;
+background:rgba(0,255,102,0.04);
+}
+
+.result-card{
+border:1px solid rgba(0,255,102,0.5);
+border-radius:4px;
+padding:10px 12px;
+margin-top:8px;
+background:rgba(0,255,102,0.05);
+transition:border-color 0.2s ease;
+}
+
+.result-card:hover{border-color:#00ff66;}
+
+.small{font-size:11px;opacity:0.65}
+
+.top-bar{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:6px;
+}
+
+.btn-sm{
+width:auto;
+padding:6px 12px;
+margin:0 0 0 6px;
+font-size:11px;
+display:inline-block;
+}
+
+.btn-row{
+display:flex;
+flex-wrap:wrap;
+gap:8px;
+margin-top:10px;
+}
+
+.btn-row button{
+width:auto;
+flex:1 1 90px;
+margin-top:0;
+}
+
+.gen-row{
+display:flex;
+gap:8px;
+align-items:center;
+margin-top:10px;
+flex-wrap:wrap;
+}
+
+.gen-row input{margin-top:0;flex:1 1 140px;}
+
+.tag{
+display:inline-block;
+padding:2px 8px;
+border-radius:10px;
+font-size:10px;
+letter-spacing:1px;
+font-weight:bold;
+}
+
+.tag.active{background:rgba(0,255,102,0.15);color:#00ff66;border:1px solid #00ff66;}
+.tag.expired{background:rgba(255,59,59,0.12);color:#ff5c5c;border:1px solid #ff5c5c;}
+.tag.revoked{background:rgba(150,150,150,0.12);color:#999;border:1px solid #666;}
+
+.copy-btn{
+width:auto;
+padding:3px 8px;
+font-size:10px;
+margin:0 0 0 8px;
+display:inline-block;
+vertical-align:middle;
+}
+
+.tabs{
+display:flex;
+gap:6px;
+margin-bottom:14px;
+}
+
+.tab-btn{
+width:auto;
+flex:1;
+margin-top:0;
+padding:9px;
+font-size:12px;
+opacity:0.6;
+border-radius:4px;
+}
+
+.tab-btn.active{
+opacity:1;
+background:#00ff66;
+color:#020403;
+box-shadow:0 0 14px rgba(0,255,102,0.7);
+}
+
+.stats-row{
+display:flex;
+gap:10px;
+}
+
+.stats-row .box{flex:1;text-align:center;}
+
+.stats-row .num{
+font-size:22px;
+font-weight:bold;
+display:block;
+text-shadow:0 0 10px rgba(0,255,102,0.7);
+}
+
+#list, #history{margin-top:6px;}
+
+.empty-msg{
+text-align:center;
+opacity:0.4;
+font-size:12px;
+padding:14px 0;
+}
+
+::-webkit-scrollbar{width:8px;}
+::-webkit-scrollbar-track{background:rgba(0,0,0,0.4);}
+::-webkit-scrollbar-thumb{background:#00ff66;border-radius:4px;}
+</style>
+</head>
+
+<body>
+
+<canvas id="matrix"></canvas>
+
+<!-- LOGIN -->
+<div id="login" style="display:block">
+<h3>SYS SCANNER PRO</h3>
+<div class="subtitle">ACESSO RESTRITO // v2.0</div>
+
+<input id="user" placeholder="USUÁRIO">
+<input id="key" placeholder="KEY">
+
+<button onclick="checkLogin()">ENTRAR</button>
+
+<div id="error"></div>
+</div>
+
+<!-- APP -->
+<div class="container" id="app">
+
+<div class="top-bar">
+<h2 style="margin:0">SYS SCANNER PRO</h2>
+<button class="btn-sm" onclick="logoutUser()">🚪 SAIR</button>
+</div>
+
+<div class="box">STATUS: <span id="status">AGUARDANDO...</span></div>
+<div class="box">PROGRESSO: <span id="progress">0%</span></div>
+
+<div class="box" id="results"></div>
+
+<input type="file" id="file">
+
+</div>
+
+<!-- ADMIN -->
+<div id="admin">
+
+<div class="top-bar">
+<h2 style="margin:0">ADMIN PANEL</h2>
+<button class="btn-sm" onclick="logoutAdmin()">SAIR ADMIN</button>
+</div>
+
+<div class="tabs">
+<button class="tab-btn active" id="tabGenBtn" onclick="switchTab('gen')">GERAR KEYS</button>
+<button class="tab-btn" id="tabHistBtn" onclick="switchTab('hist')">HISTÓRICO</button>
+</div>
+
+<div class="stats-row">
+<div class="box"><span class="num" id="count">0</span>ATIVAS</div>
+<div class="box"><span class="num" id="countExpired">0</span>EXPIRADAS</div>
+<div class="box"><span class="num" id="countTotal">0</span>TOTAL GERADAS</div>
+</div>
+
+<!-- GERAR -->
+<div id="tabGen">
+<div class="box">
+<b>GERAR NOVA KEY</b>
+<div class="gen-row">
+<input id="customUser" placeholder="Nome do usuário (opcional)">
+</div>
+<div class="btn-row">
+<button onclick="createAccount(1)">1 DIA</button>
+<button onclick="createAccount(2)">2 DIAS</button>
+<button onclick="createAccount(3)">3 DIAS</button>
+<button onclick="createAccount(7)">7 DIAS</button>
+<button onclick="createAccount(30)">30 DIAS</button>
+</div>
+</div>
+
+<div class="box">
+<b>KEYS ATIVAS</b>
+<div id="list"></div>
+</div>
+</div>
+
+<!-- HISTÓRICO -->
+<div id="tabHist" style="display:none">
+<div class="box">
+<div class="gen-row">
+<input id="searchHist" placeholder="Buscar por usuário ou key..." oninput="renderHistory()">
+<button class="btn-sm" style="flex:0 0 auto" onclick="clearHistory()">🗑 LIMPAR HISTÓRICO</button>
+</div>
+<div id="history"></div>
+</div>
+</div>
+
+</div>
+
+<script>
+
+/* ===== MATRIX BACKGROUND ===== */
+const c=document.getElementById("matrix");
+const ctx=c.getContext("2d");
+
+function resizeCanvas(){
+c.width=innerWidth;
+c.height=innerHeight;
+cols=Math.floor(c.width/16);
+drops=Array(cols).fill(1).map(()=>Math.random()*-100);
+speeds=Array(cols).fill(0).map(()=>0.3+Math.random()*1.2);
+}
+
+let cols, drops, speeds;
+const chars="アイウエオカキクケコサシスセソ01ABCDEF$#@*+-<>/\\";
+resizeCanvas();
+window.addEventListener("resize",resizeCanvas);
+
+function draw(){
+ctx.fillStyle="rgba(2,4,3,0.08)";
+ctx.fillRect(0,0,c.width,c.height);
+
+for(let i=0;i<drops.length;i++){
+const x=i*16;
+const y=drops[i]*16;
+const ch=chars[Math.floor(Math.random()*chars.length)];
+
+// leading character brighter
+ctx.fillStyle="rgba(180,255,210,0.9)";
+ctx.font="14px monospace";
+ctx.fillText(ch,x,y);
+
+ctx.fillStyle="rgba(0,255,102,0.35)";
+ctx.fillText(chars[Math.floor(Math.random()*chars.length)],x,y-16);
+
+drops[i]+=speeds[i];
+if(y>c.height && Math.random()>0.975){
+drops[i]=Math.random()*-40;
+speeds[i]=0.3+Math.random()*1.2;
+}
+}
+}
+setInterval(draw,45);
+
+/* ===== DATA (SINCRONIZADO ENTRE DISPOSITIVOS via Netlify Function + Blobs) ===== */
+const adminKey="ADMIN-ROOT-9X7";
+const KV_ENDPOINT="/.netlify/functions/kv";
+let hasCloud=false; // é atualizado após a primeira tentativa de acesso à function
+
+async function cloudGet(key){
+let r=await fetch(`${KV_ENDPOINT}?key=${encodeURIComponent(key)}`);
+if(!r.ok) throw new Error("cloud get failed: "+r.status);
+let data=await r.json();
+return data.value;
+}
+
+async function cloudSet(key,value){
+let r=await fetch(`${KV_ENDPOINT}?key=${encodeURIComponent(key)}`,{
+method:"POST",
+headers:{"Content-Type":"application/json","x-admin-key":adminKey},
+body:JSON.stringify({value})
+});
+if(!r.ok) throw new Error("cloud set failed: "+r.status);
+}
+
+let db=[];
+let historyDb=[];
+
+// tenta a Netlify Function primeiro (sincroniza entre aparelhos);
+// se a function não responder (offline, function não deployada, etc.),
+// cai pro localStorage (só este aparelho)
+async function loadDb(){
+try{
+let v=await cloudGet("db");
+db = v ? JSON.parse(v) : [];
+hasCloud=true;
+return;
+}catch(e){
+hasCloud=false;
+db=JSON.parse(localStorage.getItem("db")||"[]");
+}
+}
+
+async function loadHistory(){
+try{
+let v=await cloudGet("keyHistory");
+historyDb = v ? JSON.parse(v) : [];
+hasCloud=true;
+return;
+}catch(e){
+hasCloud=false;
+historyDb=JSON.parse(localStorage.getItem("keyHistory")||"[]");
+}
+}
+
+async function saveDb(){
+localStorage.setItem("db",JSON.stringify(db)); // backup local sempre
+try{
+await cloudSet("db",JSON.stringify(db));
+hasCloud=true;
+}catch(e){ hasCloud=false; }
+}
+
+async function saveHistory(){
+localStorage.setItem("keyHistory",JSON.stringify(historyDb));
+try{
+await cloudSet("keyHistory",JSON.stringify(historyDb));
+hasCloud=true;
+}catch(e){ hasCloud=false; }
+}
+
+function syncBadgeHtml(){
+return hasCloud
+? `<span class="tag active" style="margin-left:6px">🌐 KEYS UNIVERSAIS (SINCRONIZADAS)</span>`
+: `<span class="tag revoked" style="margin-left:6px">💾 SOMENTE ESTE APARELHO</span>`;
+}
+
+/* ===== LOGIN ===== */
+async function checkLogin(){
+
+let u=user.value.trim();
+let k=key.value.trim();
+
+if(k===adminKey){
+await enterAdmin();
+return;
+}
+
+error.innerText="VERIFICANDO...";
+await loadDb(); // busca a lista mais recente (inclui keys criadas em outros aparelhos)
+
+let acc=db.find(x=>
+x.user===u &&
+x.key===k &&
+x.active &&
+x.exp>Date.now()
+);
+
+if(!acc){
+error.innerText="LOGIN INVÁLIDO";
+return;
+}
+
+error.innerText="";
+enterApp();
+}
+
+function enterApp(){
+login.style.display="none";
+app.style.display="block";
+admin.style.display="none";
+}
+
+async function enterAdmin(){
+login.style.display="none";
+app.style.display="none";
+admin.style.display="block";
+await loadDb();
+await loadHistory();
+render();
+renderHistory();
+update();
+}
+
+/* ===== KEY GENERATION ===== */
+function generateKeyString(){
+const part=()=>Math.random().toString(36).substring(2,7).toUpperCase();
+return `KEY-${part()}-${part()}`;
+}
+
+async function createAccount(days){
+
+let customName=customUser.value.trim();
+let user=customName ? customName.toUpperCase().replace(/\s+/g,"_") : "USER_"+Math.random().toString(36).substring(2,8).toUpperCase();
+let key=generateKeyString();
+let now=Date.now();
+
+let entry={
+user,
+key,
+active:true,
+createdAt:now,
+exp:now+days*86400000,
+days
+};
+
+db.push(entry);
+await saveDb();
+
+historyDb.unshift({
+user,
+key,
+days,
+createdAt:now,
+exp:now+days*86400000,
+action:"CRIADA"
+});
+await saveHistory();
+
+customUser.value="";
+
+render();
+renderHistory();
+update();
+}
+
+/* ===== ADMIN LIST (ATIVAS) ===== */
+function render(){
+
+if(db.length===0){
+list.innerHTML="<div class='empty-msg'>NENHUMA KEY GERADA AINDA</div>"+`<div class="small" style="margin-top:8px">${syncBadgeHtml()}</div>`;
+return;
+}
+
+list.innerHTML=`<div class="small" style="margin-bottom:8px">${syncBadgeHtml()}</div>`+db.slice().reverse().map(x=>{
+let expired=x.exp<=Date.now();
+let statusTag = !x.active ? `<span class="tag revoked">REVOGADA</span>`
+: expired ? `<span class="tag expired">EXPIRADA</span>`
+: `<span class="tag active">ATIVA</span>`;
+
+return `
+<div class="result-card">
+<div class="top-bar" style="margin-bottom:4px">
+<b>${x.user}</b>
+${statusTag}
+</div>
+KEY: <code>${x.key}</code>
+<button class="copy-btn" onclick="copyKey('${x.key}')">COPIAR</button><br>
+<span class="small">Criada: ${new Date(x.createdAt||Date.now()).toLocaleString()} • Expira: ${new Date(x.exp).toLocaleString()} • ${x.days||"?"} dia(s)</span><br>
+${x.active ? `<button class="copy-btn" style="margin-top:6px" onclick="revokeKey('${x.key}')">REVOGAR</button>` : ""}
+</div>
+`;
+}).join("");
+
+}
+
+async function revokeKey(k){
+let entry=db.find(x=>x.key===k);
+if(!entry) return;
+entry.active=false;
+await saveDb();
+
+historyDb.unshift({
+user:entry.user,
+key:entry.key,
+days:entry.days,
+createdAt:Date.now(),
+exp:entry.exp,
+action:"REVOGADA"
+});
+await saveHistory();
+
+render();
+renderHistory();
+update();
+}
+
+function copyKey(k){
+navigator.clipboard.writeText(k).catch(()=>{});
+}
+
+/* ===== HISTÓRICO ===== */
+function renderHistory(){
+
+let q=(document.getElementById("searchHist")?.value||"").trim().toLowerCase();
+
+let data=historyDb.filter(x=>
+!q || x.user.toLowerCase().includes(q) || x.key.toLowerCase().includes(q)
+);
+
+if(data.length===0){
+history.innerHTML="<div class='empty-msg'>NENHUM REGISTRO NO HISTÓRICO</div>";
+return;
+}
+
+history.innerHTML=data.map(x=>`
+<div class="result-card">
+<div class="top-bar" style="margin-bottom:4px">
+<b>${x.user}</b>
+<span class="small">${x.action}</span>
+</div>
+KEY: <code>${x.key}</code>
+<button class="copy-btn" onclick="copyKey('${x.key}')">COPIAR</button><br>
+<span class="small">${new Date(x.createdAt).toLocaleString()} • ${x.days||"?"} dia(s) • expira ${new Date(x.exp).toLocaleDateString()}</span>
+</div>
+`).join("");
+
+}
+
+async function clearHistory(){
+if(!confirm("Limpar todo o histórico de keys? Isso não afeta as keys ativas.")) return;
+historyDb=[];
+await saveHistory();
+renderHistory();
+}
+
+function switchTab(tab){
+const isGen = tab==="gen";
+tabGen.style.display = isGen ? "block" : "none";
+tabHist.style.display = isGen ? "none" : "block";
+tabGenBtn.classList.toggle("active",isGen);
+tabHistBtn.classList.toggle("active",!isGen);
+if(!isGen) renderHistory();
+}
+
+function update(){
+count.innerText=db.filter(x=>x.active && x.exp>Date.now()).length;
+countExpired.innerText=db.filter(x=>!x.active || x.exp<=Date.now()).length;
+countTotal.innerText=db.length;
+}
+
+/* ===== LOGOUT ===== */
+function logoutUser(){
+app.style.display="none";
+login.style.display="block";
+user.value="";
+key.value="";
+results.innerHTML="";
+status.textContent="AGUARDANDO...";
+progress.textContent="0%";
+}
+
+function logoutAdmin(){
+admin.style.display="none";
+login.style.display="block";
+}
+
+/* ===== SCANNER (detecção de proxy original + histórico de perfis novo) ===== */
+
+function escapeHtml(str){
+if(!str) return "";
+return String(str)
+.replace(/&/g,"&amp;")
+.replace(/</g,"&lt;")
+.replace(/>/g,"&gt;")
+.replace(/"/g,"&quot;");
+}
+
+file.onchange = async e => {
+
+const f = e.target.files[0];
+if(!f) return;
+
+status.textContent = "SCANNING...";
+results.innerHTML="";
+
+const proxies = [
+{name:"ZEEX Free/VIP",values:["78f","d14","140","06"]},
+{name:"Fatality Bypass",values:["1ea","b0","2c","9d"]},
+{name:"Luxe Cheats",values:["b9","a4"]},
+{name:"XTREMO",values:["com.xtremo.mobile"]},
+{name:"DASH",values:["60a","70a","dash.proxy"]},
+{name:"WORK",values:["d03090"]},
+{name:"Community Guest",values:["439"]},
+{name:"Casa de Aposta",values:["704114"]},
+{name:"Desconhecida",values:[
+"06a","84","7d","051","3c4","ae7","0af","proxyady",
+"704","0d","40e","59ac","4cf","bd32","bd32d","90eb",
+"d03","87","0e","47","f9","e0","51","bc","5b","e3",
+"6b","c9","4d","d5","96f","a4c","dd4fa","dd4f0","5c"
+]}
+];
+
+/* Indicadores públicos e amplamente documentados de jailbreak em iOS
+(gerenciadores de pacotes, caminhos de sistema e ferramentas conhecidas) */
+const jailbreakIndicators = [
+"cydia","sileo","zebra","installer.app",
+"mobilesubstrate","substitute","libsubstrate",
+"/applications/cydia.app","/private/var/lib/apt",
+"/private/var/stash","/private/var/lib/cydia",
+"checkra1n","checkm8","unc0ver","taurine","chimera",
+"electra","odyssey","palera1n","trollstore",
+"com.saurik.cydia","apt/sources.list.d","undecimus"
+];
+
+/* Escapa caracteres especiais de regex num token literal */
+function escapeRegex(s){
+return s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+}
+
+/* Palavras que só aparecem perto de perfis de configuração / MDM reais
+num sysdiagnose. Exigir uma delas nas proximidades de um token evita
+contar coincidências de hex aleatório espalhadas pelo arquivo. */
+const profileContextWords = [
+"mobileconfig","payloadidentifier","payloaduuid","payloadcontent",
+"payloadtype","payloaddisplayname","payloadversion",
+"configurationprofile","mcprofile","profileinstall","installedprofile",
+"provisioningprofile"
+];
+
+function hasNearbyContext(text, idx, tokenLen){
+let start=Math.max(0, idx-200);
+let end=Math.min(text.length, idx+tokenLen+200);
+let window=text.slice(start,end);
+for(let kw of profileContextWords){
+if(window.includes(kw)) return true;
+}
+return false;
+}
+
+/* Classificação por especificidade do token:
+- "domain"  : contém "." ou "/" (ex: dash.proxy, com.xtremo.mobile) -> altamente específico,
+              basta 1 ocorrência, sem precisar de contexto.
+- length<=2 : descartado — hex de 1-2 chars é comum demais pra servir de evidência,
+              mesmo isolado e com contexto perto, então nem entra na varredura.
+- length 3-4: "médio" -> precisa de contexto por perto E o grupo só é sinalizado
+              com pelo menos 2 pontos de evidência (peso 1 cada).
+- length>=5 : "alto" -> precisa de contexto por perto, mas sozinho já basta (peso 2). */
+function tokenTier(token){
+if(token.includes(".") || token.includes("/")) return "domain";
+if(token.length<=2) return "skip";
+if(token.length<=4) return "medium";
+return "high";
+}
+
+const boundaryReCache=new Map();
+function boundaryRegex(token){
+let re=boundaryReCache.get(token);
+if(!re){
+re=new RegExp("(?<![a-z0-9])"+escapeRegex(token)+"(?![a-z0-9])","gi");
+boundaryReCache.set(token,re);
+}
+re.lastIndex=0;
+return re;
+}
+
+const EVIDENCE_THRESHOLD=2; // pontuação mínima acumulada pra um grupo ser sinalizado
+
+/* Acumuladores por grupo, válidos para o arquivo inteiro (não por chunk) */
+let groupScore={}, groupHitTokens={};
+for(let g of proxies){
+groupScore[g.name]=0;
+groupHitTokens[g.name]=new Set();
+}
+
+let found=[];
+let jbFound=[];
+let profileEvents=[];
+let seenEvents=new Set();
+let prevTail=""; // mantém o final do chunk anterior para não perder ocorrências na fronteira
+
+let offset=0;
+let total=f.size;
+const chunk=1024*512;
+
+while(offset < total){
+
+let slice=f.slice(offset, offset+chunk);
+let rawText=await slice.text();
+let text=(prevTail+rawText).toLowerCase();
+
+/* --- detecção de proxy, ponderada por especificidade do token --- */
+for(let g of proxies){
+for(let v of g.values){
+
+let tier=tokenTier(v);
+if(tier==="skip") continue;
+
+if(tier==="domain"){
+if(text.includes(v)){
+groupScore[g.name]+=EVIDENCE_THRESHOLD; // sozinho já basta
+groupHitTokens[g.name].add(v);
+}
+continue;
+}
+
+let re=boundaryRegex(v);
+let m;
+while((m=re.exec(text))!==null){
+if(hasNearbyContext(text, m.index, v.length)){
+groupScore[g.name]+=(tier==="high"?2:1);
+groupHitTokens[g.name].add(v);
+}
+}
+
+}
+}
+
+/* --- detecção de jailbreak (strings específicas, baixo risco de coincidência) --- */
+for(let v of jailbreakIndicators){
+if(text.includes(v) && !jbFound.includes(v)){
+jbFound.push(v);
+}
+}
+
+/* --- histórico de instalação/remoção de perfil (MCProfileEvents) --- */
+let combinedRaw = prevTail+rawText;
+let combinedLower = text;
+
+for(let g of proxies){
+let nameLower=g.name.toLowerCase();
+let idx=0;
+
+while((idx=combinedLower.indexOf(nameLower,idx))!==-1){
+
+let start=Math.max(0, idx-250);
+let end=Math.min(combinedRaw.length, idx+nameLower.length+250);
+let context=combinedRaw.slice(start,end);
+let cont
